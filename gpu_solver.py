@@ -99,7 +99,7 @@ extern "C" __global__ void solve(
                 #pragma unroll
                 for (int y = 0; y < 5; y++) {
                     int rr = R[y*5+x];
-                    tp[x*5 + ((2*x + 3*y) % 5)] = rotl64(s[y*5+x], rr);
+                    tp[((2*x + 3*y) % 5)*5 + y] = rotl64(s[y*5+x], rr);
                 }
             #pragma unroll
             for (int y = 0; y < 5; y++)
