@@ -40,10 +40,38 @@ python3 pfft_miner.py
 ## Files
 
 | File | Purpose |
-|------|---------|
+|------|-------------|
 | `src/main.rs` | Rust PoW solver — parallel keccak256 brute force |
-| `pfft_miner.py` | Python driver — RPC, challenge, tx submission |
+| `pfft_miner.py` | Single-wallet driver |
+| `pfft_miner_multi.py` | Multi-wallet driver (sequential, reads `wallets.txt`) |
 | `Cargo.toml` | Rust build config (LTO, opt-level 3) |
+| `setup.sh` | One-liner installer for fresh Ubuntu/Debian |
+
+## Multi-wallet mode
+
+Create `wallets.txt` (gitignored) — one private key per line:
+
+```
+0xaaa...111  # burner-1
+0xbbb...222  # burner-2
+0xccc...333  # burner-3
+```
+
+Then run:
+
+```bash
+./venv/bin/python3 pfft_miner_multi.py
+```
+
+Flow: iterates each wallet sequentially, mints until capped (10k PFFT),
+then moves to the next. Skips wallets with 0 ETH or already capped.
+Shows a pre-scan table + final summary.
+
+You can also pass keys via env var (comma-separated):
+
+```bash
+WALLETS=0xaaa,0xbbb,0xccc ./venv/bin/python3 pfft_miner_multi.py
+```
 
 ## Solver CLI (standalone)
 
