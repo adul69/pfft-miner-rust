@@ -37,15 +37,30 @@ nano .env   # paste PRIVATE_KEY
 python3 pfft_miner.py
 ```
 
+## CPU or GPU?
+
+**CPU Rust solver** — default, works on any box:
+- `setup.sh` installs it
+- Run: `./venv/bin/python3 pfft_miner.py`
+- ~20-40 MH/s per 16 cores
+
+**GPU CUDA solver** — for NVIDIA instances on Vast.ai:
+- `setup-gpu.sh` installs pycuda + benchmarks
+- Run: `USE_GPU=1 ./venv/bin/python3 pfft_miner.py`
+- ~300-1500 MH/s per GPU (RTX 3060 → 4090)
+- At current 28-bit difficulty, **GPU solves in <1 second** so
+  block time (12 s) is the real bottleneck — CPU is often enough.
+
 ## Files
 
 | File | Purpose |
 |------|-------------|
-| `src/main.rs` | Rust PoW solver — parallel keccak256 brute force |
+| `src/main.rs` | Rust CPU PoW solver |
+| `gpu_solver.py` | CUDA GPU solver (drop-in replacement) |
 | `pfft_miner.py` | Single-wallet driver |
-| `pfft_miner_multi.py` | Multi-wallet driver (sequential, reads `wallets.txt`) |
-| `Cargo.toml` | Rust build config (LTO, opt-level 3) |
-| `setup.sh` | One-liner installer for fresh Ubuntu/Debian |
+| `pfft_miner_multi.py` | Multi-wallet driver (sequential) |
+| `setup.sh` | CPU installer for fresh Ubuntu |
+| `setup-gpu.sh` | GPU installer (needs NVIDIA driver + CUDA) |
 
 ## Multi-wallet mode
 

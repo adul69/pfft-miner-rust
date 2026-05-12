@@ -35,10 +35,12 @@ GAS_PRICE_MULT = float(os.environ.get("GAS_PRICE_MULT", "1.1"))
 MAX_GAS_GWEI = float(os.environ.get("MAX_GAS_GWEI", "20"))  # pause if gas > this
 PAUSE_BETWEEN_ROUNDS = int(os.environ.get("PAUSE_BETWEEN_ROUNDS", "3"))
 THREADS = os.environ.get("SOLVER_THREADS", "")  # "" = auto
+USE_GPU = os.environ.get("USE_GPU", "0") in ("1", "true", "yes")
 SOLVER = os.environ.get(
     "SOLVER_BIN",
     str(Path(__file__).parent / "target" / "release" / "pfft-solver"),
 )
+GPU_SCRIPT = str(Path(__file__).parent / "gpu_solver.py")
 
 ABI = [
     {"inputs":[],"name":"currentPowHexZeros","outputs":[{"type":"uint256"}],"stateMutability":"view","type":"function"},
@@ -56,10 +58,15 @@ def human(n, d=18):
     return f"{n/10**d:,.2f}"
 
 def run_solver(challenge_hex: str, hex_zeros: int):
-    cmd = [SOLVER, challenge_hex, str(hex_zeros)]
-    if THREADS:
-        cmd.append(str(THREADS))
-    print(f"  solver: {' '.join(cmd)}")
+    if USE_GPU:
+        # Use python venv interpreter if available
+        py = os.environ.get("PYTHON_BIN", sys.executable)
+        cmd = [py, GPU_SCRIPT, challenge_hex, str(hex_zeros)]
+    else:
+        cmd = [SOLVER, challenge_hex, str(hex_zeros)]
+        if THREADS:
+            cmd.append(str(THREADS))
+    print(f"  solver: {'GPU' if USE_GPU else 'CPU'}")
     t0 = time.time()
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
     dt = time.time() - t0

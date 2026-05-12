@@ -38,10 +38,12 @@ GAS_PRICE_MULT = float(os.environ.get("GAS_PRICE_MULT", "1.1"))
 MAX_GAS_GWEI = float(os.environ.get("MAX_GAS_GWEI", "20"))
 PAUSE_BETWEEN_ROUNDS = int(os.environ.get("PAUSE_BETWEEN_ROUNDS", "3"))
 THREADS = os.environ.get("SOLVER_THREADS", "")
+USE_GPU = os.environ.get("USE_GPU", "0") in ("1", "true", "yes")
 SOLVER = os.environ.get(
     "SOLVER_BIN",
     str(Path(__file__).parent / "target" / "release" / "pfft-solver"),
 )
+GPU_SCRIPT = str(Path(__file__).parent / "gpu_solver.py")
 WALLET_CAP = 10_000 * 10**18
 
 ABI = [
@@ -88,9 +90,13 @@ def load_wallets():
     return out
 
 def run_solver(challenge_hex: str, hex_zeros: int):
-    cmd = [SOLVER, challenge_hex, str(hex_zeros)]
-    if THREADS:
-        cmd.append(str(THREADS))
+    if USE_GPU:
+        py = os.environ.get("PYTHON_BIN", sys.executable)
+        cmd = [py, GPU_SCRIPT, challenge_hex, str(hex_zeros)]
+    else:
+        cmd = [SOLVER, challenge_hex, str(hex_zeros)]
+        if THREADS:
+            cmd.append(str(THREADS))
     t0 = time.time()
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
     dt = time.time() - t0
@@ -107,7 +113,7 @@ def run_solver(challenge_hex: str, hex_zeros: int):
     if nonce is None:
         print(f"  solver no NONCE: {proc.stdout}")
         return None
-    print(f"  solved {dt:.1f}s @ {rate} MH/s nonce={nonce}")
+    print(f"  solved {dt:.1f}s @ {rate} MH/s ({'GPU' if USE_GPU else 'CPU'}) nonce={nonce}")
     return nonce
 
 def mine_wallet(w3, acct, label, contract):
